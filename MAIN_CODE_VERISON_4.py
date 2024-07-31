@@ -47,11 +47,11 @@ def create_mysql_table_and_insert_data(parameters, db_table_name, row_data, sect
         )
         cursor = connection.cursor()
 
-        # Modify the create table query to include section_id, raspberrypi_id, and meter_id
+        # Modify The Create Table Qurey To Include section_id, raspberrypi_id, And meter_id
         create_table_query = f"CREATE TABLE IF NOT EXISTS `{db_table_name}` (Date DATETIME, section_id INT, raspberrypi_id INT, meter_id INT, {', '.join(parameters)})"
         cursor.execute(create_table_query)
 
-        # Add section_id, raspberrypi_id, and meter_id to the row data
+        # Add section_id, raspberrypi_id, And meter_id To The Row Data
         row_data = [get_current_datetime(), section_id, raspberrypi_id, meter_id] + row_data
 
         placeholders = ', '.join(['%s'] * (len(parameters) + 4))
@@ -62,9 +62,9 @@ def create_mysql_table_and_insert_data(parameters, db_table_name, row_data, sect
         cursor.close()
         connection.close()
     except mysql.connector.Error as e:
-        print(f"MYSQL ERROR: {e}")
+        print(f"Database Error MySql: {e}")
 
-# Function to get the meter details from the API endpoint
+# Function To Get Meter Details From Api End Point
 def get_meter_details():
     api_url = "http://192.168.0.158:5000/api/meters"
     try:
@@ -72,24 +72,24 @@ def get_meter_details():
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
-        print(f"API Error: {e}")
+        print(f"Api Error: {e}")
         return None
 
-# Function to collect data for all meters
+# Function To Collect Data For All Meters
 def collect_data_for_all_meters(num_meters, meter_details, parameters, section_id, raspberrypi_id):
     while True:
         for meter_index in range(num_meters):
             collect_data_for_meter(meter_index, meter_details[meter_index], parameters[meter_index], section_id, raspberrypi_id)
         time.sleep(60)
 
-# Function to collect data for a single meter
+# Function To Collect Data From A Single Meter
 def collect_data_for_meter(meter_index, meter_details, parameters, section_id, raspberrypi_id):
     print(f"Meter {meter_index + 1} of {num_meters}")
 
     model_number = meter_details['meter_model']
     file_name = f'Section{section_id}_RaspberryPi{raspberrypi_id}.csv'
     db_table_name = f'Section{section_id}_RaspberryPi{raspberrypi_id}'
-    initialize_csv_file(file_name, parameters)  # Initialize the file with headers
+    initialize_csv_file(file_name, parameters)  # Initialize The Files With Headers
 
     try:
         instrument = minimalmodbus.Instrument(serial_port, int(meter_details['slave_address']))
@@ -118,7 +118,7 @@ def collect_data_for_meter(meter_index, meter_details, parameters, section_id, r
                 register_value = struct.unpack('<f', little_endian_bytes)[0]
                 row_data.append(replace_nan_with_zero(register_value))
 
-        write_data_to_csv(file_name, row_data)  # Append data to the file
+        write_data_to_csv(file_name, row_data)  # Append Data To The Local File
         print(f"Data Inserted Into File {file_name} Successfully")
 
         create_mysql_table_and_insert_data(parameters, db_table_name, row_data, section_id, raspberrypi_id, meter_index + 1)
@@ -126,10 +126,10 @@ def collect_data_for_meter(meter_index, meter_details, parameters, section_id, r
 
         print('*' * 50)
     except Exception as e:
-        print(f"Connection to Meter {meter_index + 1} Failed: {str(e)}")
+        print(f"Connection To Meter {meter_index + 1} Failed: {str(e)}")
 
 if __name__ == "__main__":
-    # Get meter details from the API
+    # Get Meter Details From The Api End Point
     api_data = get_meter_details()
 
     if api_data and 'num_meters_connected' in api_data and 'meters_details' in api_data:
@@ -150,5 +150,5 @@ if __name__ == "__main__":
 
         collect_data_for_all_meters(num_meters, meter_details, parameters, section_id, raspberrypi_id)
     else:
-        print("Invalid API response. Check the API endpoint.")
+        print("Invalid Api Response. Check The Api Endpoint")
 
